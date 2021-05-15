@@ -1,2 +1,2 @@
 # botshop
-Framework for chatbot model inference, optimized for neural conversational models.
+Framework for chatbot model inference, optimized for neural conversation models.
