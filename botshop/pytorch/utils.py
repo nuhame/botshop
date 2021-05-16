@@ -6,10 +6,7 @@ def random_sample(logits, T):
     p = p / p.sum()
 
     token_idx = torch.multinomial(p.view(-1), 1)
-    token_p = torch.gather(p, 2, token_idx.view(1, -1, 1))
-
-    token_idx = token_idx.view(1, -1)
-    token_p = token_p.view(1, -1)
+    token_p = torch.gather(p, 2, token_idx)
 
     return token_p, token_idx
 
@@ -18,7 +15,7 @@ def select_max(logits):
     p = torch.exp(logits)
     p = p / p.sum()
 
-    token_p, token_idx = torch.max(p, dim=2)
+    token_p, token_idx = torch.max(p, dim=0)
 
     return token_p, token_idx
 
