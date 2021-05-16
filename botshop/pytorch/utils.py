@@ -6,7 +6,7 @@ def random_sample(logits, T):
     p = p / p.sum()
 
     token_idx = torch.multinomial(p.view(-1), 1)
-    token_p = torch.gather(p, 2, token_idx)
+    token_p = torch.gather(p, 0, token_idx)
 
     return token_p, token_idx
 
