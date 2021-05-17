@@ -1,13 +1,9 @@
 import torch
+import torch.nn.functional as F
 
 
 def random_sample(logits, T):
-    p = torch.exp(logits / T)
-
-    if not torch.any(torch.isinf(p)):
-        p = p / p.sum()
-    else:
-        p = (1.0/len(p))*torch.ones_like(p)
+    p = F.softmax(logits / T)
 
     token_idx = torch.multinomial(p.view(-1), 1)
     token_p = torch.gather(p, 0, token_idx)
