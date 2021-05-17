@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 def random_sample(logits, T):
-    p = F.softmax(logits / T)
+    p = F.softmax(logits / T, dim=0)
 
     token_idx = torch.multinomial(p.view(-1), 1)
     token_p = torch.gather(p, 0, token_idx)
