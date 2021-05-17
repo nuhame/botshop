@@ -4,11 +4,10 @@ import torch
 def random_sample(logits, T):
     p = torch.exp(logits / T)
 
-    sigma_p = p.sum()
-    if sigma_p > 0:
-        p = p / sigma_p
+    if not torch.any(torch.isinf(p)):
+        p = p / p.sum()
     else:
-        p = torch.zeros_like(p)
+        p = (1.0/len(p))*torch.ones_like(p)
 
     token_idx = torch.multinomial(p.view(-1), 1)
     token_p = torch.gather(p, 0, token_idx)
