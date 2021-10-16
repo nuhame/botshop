@@ -12,8 +12,7 @@ def random_sample(logits, T):
 
 
 def select_max(logits):
-    p = torch.exp(logits)
-    p = p / p.sum()
+    p = F.softmax(logits, dim=0)
 
     token_p, token_idx = torch.max(p, dim=0)
 

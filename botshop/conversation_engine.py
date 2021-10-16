@@ -56,12 +56,23 @@ class BasicConversationEngine(ConversationEngineBase):
                  io_processor,
                  model_evaluator,
                  select_token_func,
-                 sequence_end_index,
+                 sequence_end_index=None,
+                 is_sequence_end_func=None,
                  **kwargs):
         super().__init__(io_processor, model_evaluator, **kwargs)
 
         self._select_token_func = select_token_func
+
+        if (sequence_end_index is None and is_sequence_end_func is None) or \
+                (sequence_end_index is not None and is_sequence_end_func is not None):
+            raise Exception("Either define sequence_end_index or is_sequence_end_func")
+
+        if sequence_end_index is not None:
+            self._log.debug("Creating is_sequence_end_func using sequence_end_index")
+            is_sequence_end_func = lambda response: response[-1] == sequence_end_index
+
         self._sequence_end_index = sequence_end_index
+        self._is_sequence_end_func = is_sequence_end_func
 
     def respond(self, inputs, conversation_start=False):
         processed_inputs = self._io_processor.process_inputs(inputs, conversation_start)
@@ -90,12 +101,12 @@ class BasicConversationEngine(ConversationEngineBase):
             # Obtain most likely word token and its score
             score, token = self._select_token_func(prediction_data)
 
-            if token == self._sequence_end_index:
-                break
-
             # Record token and score
             response += [self._unwrap(token)]
             scores += [self._unwrap(score)]
+
+            if self._is_sequence_end_func(response):
+                break
 
             prev_token = token
 
