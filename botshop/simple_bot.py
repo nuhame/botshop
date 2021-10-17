@@ -184,7 +184,8 @@ class SimpleBot(Base):
         response, scores = self._conversation_engine.respond({
             "chats": self._chats,
             "is_user": self._is_user,
-            "actor_name": self._actor_name
+            "actor_name": self._actor_name,
+            "responding_actor": self._bot_name
         }, self._conversation_start)
 
         return response, scores
