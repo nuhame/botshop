@@ -37,7 +37,6 @@ class SimpleIOProcessor(IOProcessorBase):
     def __init__(self,
                  encoding_func,
                  decoding_func,
-                 max_sequence_length=None,
                  preprocessing_func=None,
                  **kwargs):
         """
@@ -48,8 +47,6 @@ class SimpleIOProcessor(IOProcessorBase):
         :param decoding_func     : function that takes a list of tokenized and indexed inputs
                                    and returns a detokenized and deindexed list of inputs
 
-        :param max_sequence_length : Optional, max. sequence length of any input sequences
-
         :param preprocessing_func  : Optional, function that takes a list of sequences as inputs and
                                      returns a preprocessed list of inputs
         """
@@ -58,7 +55,6 @@ class SimpleIOProcessor(IOProcessorBase):
         self._encoding_func = encoding_func
         self._decoding_func = decoding_func
 
-        self._max_sequence_length = max_sequence_length
         self._preprocessing_func = preprocessing_func
 
     def process_inputs(self, inputs, conversation_start):
@@ -79,26 +75,23 @@ class SimpleIOProcessor(IOProcessorBase):
         if callable(self._preprocessing_func):
             sequence_inputs = self._preprocessing_func(sequence_inputs)
 
-        sequence_inputs = self._encoding_func(sequence_inputs)
-
-        # Dealing with too long sentences is optional
-        if self._max_sequence_length is not None:
-            sequence_inputs = self._cut_off_too_long(sequence_inputs)
-
         sequence_inputs = self._build_input_sequences(sequence_inputs)
+
+        sequence_inputs = self._encode(sequence_inputs)
+
+        sequence_inputs = self._postprocess(sequence_inputs)
 
         return sequence_inputs, other_inputs
 
     def process_response(self, response, scores=None):
         """
 
-        :param response: Dict with one or more different types of inputs
+        :param response: bot response
         :param scores: data structure (e.g. list) with one or more scores related to the response
         :return:
         """
 
-        # decoding_func assumes a list of sequences
-        return self._decoding_func([response])[0], scores
+        return self._decode(response), scores
 
     @abc.abstractmethod
     def _get_input_chats(self, inputs, conversation_start):
@@ -117,9 +110,26 @@ class SimpleIOProcessor(IOProcessorBase):
         """
         raise NotImplementedError("Please implement this method in a child class")
 
-    def _cut_off_too_long(self, inputs):
+    @abc.abstractmethod
+    def _build_input_sequences(self, sequence_inputs):
         raise NotImplementedError("Please implement this method in a child class")
 
-    @abc.abstractmethod
-    def _build_input_sequences(self, inputs):
-        raise NotImplementedError("Please implement this method in a child class")
+    def _encode(self, sequence_inputs):
+        return self._encoding_func(sequence_inputs)
+
+    def _postprocess(self, sequence_inputs):
+        """
+        Optional step
+
+        :param sequence_inputs:
+        :return:
+        """
+
+        return sequence_inputs
+
+    def _decode(self, response):
+        # decoding_func assumes a list of sequences
+        return self._decoding_func([response])[0]
+
+
+
