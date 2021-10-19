@@ -5,13 +5,11 @@ from basics.base import Base
 
 class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
 
-    def __init__(self, io_processor, model_evaluator, max_sequence_length=40, debug=False):
+    def __init__(self, io_processor, model_evaluator, debug=False):
         super().__init__()
 
         self._io_processor = io_processor
         self._model_evaluator = model_evaluator
-
-        self._max_sequence_length = max_sequence_length
 
         self._debug = debug
 
@@ -58,6 +56,7 @@ class BasicConversationEngine(ConversationEngineBase):
                  select_token_func,
                  sequence_end_index=None,
                  is_sequence_end_func=None,
+                 max_response_length=-1,
                  **kwargs):
         super().__init__(io_processor, model_evaluator, **kwargs)
 
@@ -73,6 +72,8 @@ class BasicConversationEngine(ConversationEngineBase):
 
         self._sequence_end_index = sequence_end_index
         self._is_sequence_end_func = is_sequence_end_func
+
+        self._max_response_length = max_response_length
 
     def respond(self, inputs, conversation_start=False):
         processed_inputs = self._io_processor.process_inputs(inputs, conversation_start)
@@ -93,8 +94,8 @@ class BasicConversationEngine(ConversationEngineBase):
         prev_token = None
         response = []
         scores = []
-        for _ in range(self._max_sequence_length):
 
+        while True:
             prediction_data = self._model_evaluator.predict_next_token(prev_token,
                                                                        prediction_context,
                                                                        self._conversation_context)
@@ -106,6 +107,9 @@ class BasicConversationEngine(ConversationEngineBase):
             scores += [self._unwrap(score)]
 
             if self._is_sequence_end_func(response):
+                break
+
+            if len(response) >= self._max_response_length > 0:
                 break
 
             prev_token = token
