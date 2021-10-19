@@ -17,25 +17,15 @@ def response_score(scores):
 
 class SampleAndRank:
 
-    def __init__(self,
-                 io_processor,
-                 model_evaluator,
-                 select_token_func,
-                 sequence_end_index,
-                 num_candidate_responses=20,
-                 **kwargs):
+    def __init__(self, *args, num_candidate_responses=20, **kwargs):
         """
         Mixin for conversation engines to generate multiple candidate responses and choose the best one.
 
-        :param io_processor:
-        :param model_evaluator:
-        :param select_token_func:
-        :param sequence_end_index:
         :param num_candidate_responses:
 
         :param kwargs:
         """
-        super().__init__(io_processor, model_evaluator, select_token_func, sequence_end_index, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._num_candidate_responses = num_candidate_responses
 
