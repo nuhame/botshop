@@ -27,10 +27,9 @@ class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
         :param command:
         :param user_name: Optional, user name of the user who input the command
 
-        :return: <system message>, <bot response>
-                 = None, None when the conversation engine did not process any command
+        :return: <system message> = None, when the conversation engine did not process any command
         """
-        return None, None
+        return None
 
     @abc.abstractmethod
     def respond(self, inputs, conversation_start=False):
