@@ -128,8 +128,7 @@ class SimpleIOProcessor(IOProcessorBase):
         return sequence_inputs
 
     def _decode(self, response):
-        # decoding_func assumes a list of sequences
-        return self._decoding_func([response])[0]
+        return self._decoding_func(response)
 
 
 
