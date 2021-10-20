@@ -3,7 +3,23 @@ import statistics
 
 from basics.base import Base
 
+from basics.logging import get_logger
 from basics.logging_utils import log_exception
+
+
+def chat_with(bot, user_name="You", logger=None):
+    if logger is None:
+        logger = get_logger("Bot")
+
+    while True:
+        logger.info(f'{user_name} :')
+        # 3) ask for input
+        user_input = input()
+
+        response = bot.respond_to(user_input)
+
+        if response["system"] == "quit":
+            break
 
 
 class SimpleBot(Base):
