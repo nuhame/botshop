@@ -99,9 +99,9 @@ class SimpleBot(Base):
                 for actor_name, is_user, chat in zip(init_actor_name, init_is_user, init_chats):
                     self._log.debug(f"[{'USER' if is_user else 'BOT '}] {actor_name}: {chat}")
 
-        self._init_chats = init_chats
-        self._init_is_user = init_is_user
-        self._init_actor_name = init_actor_name
+        self._init_chats = init_chats.copy()
+        self._init_is_user = init_is_user.copy()
+        self._init_actor_name = init_actor_name.copy()
 
         self._chats = None
         self._is_user = None
