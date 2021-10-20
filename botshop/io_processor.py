@@ -75,7 +75,7 @@ class SimpleIOProcessor(IOProcessorBase):
         if callable(self._preprocessing_func):
             sequence_inputs = self._preprocessing_func(sequence_inputs)
 
-        sequence_inputs = self._build_input_sequences(sequence_inputs)
+        sequence_inputs = self._build_input_sequences(sequence_inputs, conversation_start)
 
         sequence_inputs = self._encode(sequence_inputs)
 
@@ -111,7 +111,7 @@ class SimpleIOProcessor(IOProcessorBase):
         raise NotImplementedError("Please implement this method in a child class")
 
     @abc.abstractmethod
-    def _build_input_sequences(self, sequence_inputs):
+    def _build_input_sequences(self, sequence_inputs, conversation_start):
         raise NotImplementedError("Please implement this method in a child class")
 
     def _encode(self, sequence_inputs):
