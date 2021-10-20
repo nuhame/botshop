@@ -117,9 +117,9 @@ class SimpleBot(Base):
 
         self._conversation_engine.reset_state()
 
-        self._chats = self._init_chats
-        self._is_user = self._init_is_user
-        self._actor_name = self._init_actor_name
+        self._chats = self._init_chats.copy()
+        self._is_user = self._init_is_user.copy()
+        self._actor_name = self._init_actor_name.copy()
 
         self._conversation_state = None
         self._conversation_start = True
