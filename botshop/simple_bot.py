@@ -1,7 +1,7 @@
 import re
 import statistics
 
-from conversation_engine import UnableToGenerateValidResponse
+from .conversation_engine import UnableToGenerateValidResponse
 
 from basics.base import Base
 

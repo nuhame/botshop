@@ -1,6 +1,6 @@
 from .simple_bot import SimpleBot
 
-from .conversation_engine import ConversationEngineBase, BasicConversationEngine
+from .conversation_engine import ConversationEngineBase, BasicConversationEngine, UnableToGenerateValidResponse
 
 from .io_processor import IOProcessorBase, SimpleIOProcessor
 
