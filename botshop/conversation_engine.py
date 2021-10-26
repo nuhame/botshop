@@ -57,29 +57,26 @@ class BasicConversationEngine(ConversationEngineBase):
                  io_processor,
                  model_evaluator,
                  select_token_func,
-                 sequence_end_index=None,
+                 sequence_end_token=None,
                  is_sequence_end_func=None,
-                 skip_start_token_func=None,
-                 max_skipped_start_tokens=5,
                  max_response_length=-1,
                  **kwargs):
         super().__init__(io_processor, model_evaluator, **kwargs)
 
         self._select_token_func = select_token_func
 
-        if (sequence_end_index is None and is_sequence_end_func is None) or \
-                (sequence_end_index is not None and is_sequence_end_func is not None):
-            raise Exception("Either define sequence_end_index or is_sequence_end_func")
+        if sequence_end_token is None and is_sequence_end_func is None:
+            raise Exception("Define sequence_end_token or is_sequence_end_func")
 
-        if sequence_end_index is not None:
-            self._log.debug("Creating is_sequence_end_func using sequence_end_index")
-            is_sequence_end_func = lambda response: response[-1] == sequence_end_index
+        if sequence_end_token is not None and is_sequence_end_func is not None:
+            raise Exception("Either define sequence_end_token or is_sequence_end_func")
 
-        self._sequence_end_index = sequence_end_index
+        if sequence_end_token is not None:
+            self._log.debug("Creating is_sequence_end_func using sequence_end_token")
+            is_sequence_end_func = lambda response, scores: response[-1] == sequence_end_token
+
+        self.sequence_end_token = sequence_end_token
         self._is_sequence_end_func = is_sequence_end_func
-
-        self._skip_start_token_func = skip_start_token_func
-        self._max_skipped_start_tokens = max_skipped_start_tokens
 
         self._max_response_length = max_response_length
 
@@ -98,33 +95,24 @@ class BasicConversationEngine(ConversationEngineBase):
         :rtype:
         """
 
+        self._will_create_response()
+
         prediction_context = {}
         prev_token = None
         response = []
         scores = []
-
-        num_tokens_skipped = 0
         while True:
-            if num_tokens_skipped > self._max_skipped_start_tokens >= 0:
-                raise UnableToGenerateValidResponse()
-
             prediction_data = self._model_evaluator.predict_next_token(prev_token,
                                                                        prediction_context,
                                                                        self._conversation_context)
             # Obtain most likely word token and its score
             score, token = self._select_token_func(prediction_data)
 
-            if self._skip_start_token_func is not None and \
-                    len(response) == 0 and \
-                    self._skip_start_token_func(self._unwrap(token)):
-                num_tokens_skipped += 1
-                continue
-
-            # Record token and score
+            # Add new token and score
             response += [self._unwrap(token)]
             scores += [self._unwrap(score)]
 
-            if self._is_sequence_end_func(response):
+            if self._is_sequence_end(response, scores):
                 break
 
             if len(response) >= self._max_response_length > 0:
@@ -132,9 +120,18 @@ class BasicConversationEngine(ConversationEngineBase):
 
             prev_token = token
 
-        response, scores = self._io_processor.process_response(response, scores)
+        response, scores = self._process_response(response, scores)
 
         return response, scores
+
+    def _will_create_response(self):
+        pass
+
+    def _is_sequence_end(self, response, scores):
+        return self._is_sequence_end_func(response=response, scores=scores)
+
+    def _process_response(self, response, scores):
+        return self._io_processor.process_response(response, scores=scores)
 
     def _unwrap(self, tensor):
         """

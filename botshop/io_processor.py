@@ -83,7 +83,7 @@ class SimpleIOProcessor(IOProcessorBase):
 
         return sequence_inputs, other_inputs
 
-    def process_response(self, response, scores=None):
+    def process_response(self, response, scores=None, **kwargs):
         """
 
         :param response: bot response
