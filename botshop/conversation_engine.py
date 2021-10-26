@@ -3,6 +3,10 @@ import abc
 from basics.base import Base
 
 
+class UnableToGenerateValidResponse(Exception):
+    pass
+
+
 class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
 
     def __init__(self, io_processor, model_evaluator, debug=False):
@@ -81,7 +85,7 @@ class BasicConversationEngine(ConversationEngineBase):
 
         return self._create_response()
 
-    def _create_response(self):
+    def _create_response(self, **kwargs):
         """
         Called after model context updated
 

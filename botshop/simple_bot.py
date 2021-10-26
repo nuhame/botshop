@@ -1,6 +1,8 @@
 import re
 import statistics
 
+from conversation_engine import UnableToGenerateValidResponse
+
 from basics.base import Base
 
 from basics.logging import get_logger
@@ -139,18 +141,28 @@ class SimpleBot(Base):
             self._is_user.append(True)
             self._actor_name.append(user_name)
 
-            bot_chat, scores = self._respond()
+            try:
+                bot_chat, scores = self._respond()
+            except UnableToGenerateValidResponse as e:
+                system_message = f"Bot {self._bot_name} was unable to generate a valid response. " \
+                                 f"Your chat is not recorded."
+            except Exception as e:
+                system_message = f"An unexpected exception occurred, bot {self._bot_name} was " \
+                                 f"unable to generate a response. Your chat is not recorded."
+                log_exception(self._log, "system_message", e)
 
-            if self._conversation_start:
-                self._conversation_start = False
+            if system_message is None:  # No exception occurred
+                if self._conversation_start:
+                    self._conversation_start = False
 
-            self._chats.append(bot_chat)
-            self._is_user.append(False)
-            self._actor_name.append(self._bot_name)
+                self._chats.append(bot_chat)
+                self._is_user.append(False)
+                self._actor_name.append(self._bot_name)
 
-            self._log_response(bot_chat, score=self._calc_final_response_score(scores))
-        else:
-            self._log.info('SYSTEM : \n%s' % system_message)
+                self._log_response(self._bot_name, bot_chat, score=self._calc_final_response_score(scores))
+
+        if system_message is not None:
+            self._log_response("System", system_message)
 
         return {
             'bot': bot_chat,
@@ -209,9 +221,9 @@ class SimpleBot(Base):
     def _calc_final_response_score(self, scores):
         return statistics.mean(scores)
 
-    def _log_response(self, response, score=None):
+    def _log_response(self, actor_name, response, score=None):
         if score is not None:
-            self._log.info('%s [%f] : \n%s' % (self._bot_name, score, response))
+            self._log.info('%s [%f] : \n%s' % (actor_name, score, response))
         else:
-            self._log.info('%s : \n%s' % (self._bot_name, response))
+            self._log.info('%s : \n%s' % (actor_name, response))
 
