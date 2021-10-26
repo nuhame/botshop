@@ -60,6 +60,7 @@ class BasicConversationEngine(ConversationEngineBase):
                  sequence_end_index=None,
                  is_sequence_end_func=None,
                  skip_start_token_func=None,
+                 max_skipped_start_tokens=5,
                  max_response_length=-1,
                  **kwargs):
         super().__init__(io_processor, model_evaluator, **kwargs)
@@ -78,6 +79,7 @@ class BasicConversationEngine(ConversationEngineBase):
         self._is_sequence_end_func = is_sequence_end_func
 
         self._skip_start_token_func = skip_start_token_func
+        self._max_skipped_start_tokens = max_skipped_start_tokens
 
         self._max_response_length = max_response_length
 
@@ -101,7 +103,11 @@ class BasicConversationEngine(ConversationEngineBase):
         response = []
         scores = []
 
+        num_tokens_skipped = 0
         while True:
+            if num_tokens_skipped > self._max_skipped_start_tokens >= 0:
+                raise UnableToGenerateValidResponse()
+
             prediction_data = self._model_evaluator.predict_next_token(prev_token,
                                                                        prediction_context,
                                                                        self._conversation_context)
@@ -111,6 +117,7 @@ class BasicConversationEngine(ConversationEngineBase):
             if self._skip_start_token_func is not None and \
                     len(response) == 0 and \
                     self._skip_start_token_func(self._unwrap(token)):
+                num_tokens_skipped += 1
                 continue
 
             # Record token and score
