@@ -59,6 +59,7 @@ class BasicConversationEngine(ConversationEngineBase):
                  select_token_func,
                  sequence_end_index=None,
                  is_sequence_end_func=None,
+                 skip_start_tokens=None,
                  max_response_length=-1,
                  **kwargs):
         super().__init__(io_processor, model_evaluator, **kwargs)
@@ -75,6 +76,8 @@ class BasicConversationEngine(ConversationEngineBase):
 
         self._sequence_end_index = sequence_end_index
         self._is_sequence_end_func = is_sequence_end_func
+
+        self._skip_start_tokens = skip_start_tokens
 
         self._max_response_length = max_response_length
 
@@ -104,6 +107,11 @@ class BasicConversationEngine(ConversationEngineBase):
                                                                        self._conversation_context)
             # Obtain most likely word token and its score
             score, token = self._select_token_func(prediction_data)
+
+            if self._skip_start_tokens is not None and \
+                    len(response) == 0 and \
+                    self._unwrap(token) in self._skip_start_tokens:
+                continue
 
             # Record token and score
             response += [self._unwrap(token)]
