@@ -77,7 +77,7 @@ class SimpleIOProcessor(IOProcessorBase):
 
         sequence_inputs = self._build_input_sequences(sequence_inputs, conversation_start)
 
-        sequence_inputs = self._encode(sequence_inputs)
+        sequence_inputs = self.encode(sequence_inputs)
 
         sequence_inputs = self._postprocess(sequence_inputs)
 
@@ -91,7 +91,13 @@ class SimpleIOProcessor(IOProcessorBase):
         :return:
         """
 
-        return self._decode(response), scores
+        return self.decode(response), scores
+
+    def encode(self, sequence_inputs, **kwargs):
+        return self._encoding_func(sequence_inputs)
+
+    def decode(self, response, **kwargs):
+        return self._decoding_func(response)
 
     @abc.abstractmethod
     def _get_input_chats(self, inputs, conversation_start):
@@ -114,9 +120,6 @@ class SimpleIOProcessor(IOProcessorBase):
     def _build_input_sequences(self, sequence_inputs, conversation_start):
         raise NotImplementedError("Please implement this method in a child class")
 
-    def _encode(self, sequence_inputs):
-        return self._encoding_func(sequence_inputs)
-
     def _postprocess(self, sequence_inputs):
         """
         Optional step
@@ -126,9 +129,6 @@ class SimpleIOProcessor(IOProcessorBase):
         """
 
         return sequence_inputs
-
-    def _decode(self, response):
-        return self._decoding_func(response)
 
 
 
