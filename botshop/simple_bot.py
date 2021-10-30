@@ -223,7 +223,7 @@ class SimpleBot(Base):
 
     def _log_response(self, actor_name, response, score=None):
         if score is not None:
-            self._log.info('%s [%f] : \n%s' % (actor_name, score, response))
+            self._log.info('%s [%f] : \n%s\n' % (actor_name, score, response))
         else:
-            self._log.info('%s : \n%s' % (actor_name, response))
+            self._log.info('%s : \n%s\n' % (actor_name, response))
 
