@@ -1,3 +1,5 @@
+import sys
+
 import re
 import statistics
 
@@ -17,6 +19,8 @@ def chat_with(bot, user_name="You", logger=None):
         logger.info(f'{user_name} :')
         # 3) ask for input
         user_input = input()
+        sys.stdout.write('\n')
+        sys.stdout.flush()
 
         response = bot.respond_to(user_input)
 
