@@ -2,8 +2,14 @@ import torch
 import torch.nn.functional as F
 
 
-def random_sample(logits, T):
-    p = F.softmax(logits / T, dim=0)
+def random_sample(logits):
+    """
+
+    :param logits: shape (num_tokens,)
+    :return: token probabilities, token index
+
+    """
+    p = F.softmax(logits, dim=0)
 
     token_idx = torch.multinomial(p.view(-1), 1)
     token_p = torch.gather(p, 0, token_idx)
@@ -19,53 +25,44 @@ def select_max(logits):
     return token_p, token_idx
 
 
-def top_p_sample(p, top_p=0.9, temperature=1.0):
+def filter_top_p(logits, top_p=0.9):
     """
 
-    TODO : make it work for batch_size > 0
-
-    :param p: shape (1, batch_size, num_tokens)
+    :param logits: shape (num_tokens,)
     :param top_p:
-    :param temperature:
-    :return:
+
+    :return: kept logits, kept token indices
     """
 
-    p_sorted, sorted_indices = torch.sort(p, dim=2, descending=True)
-    p_cumulative = torch.cumsum(p_sorted, dim=2)
+    p = F.softmax(logits, dim=0)
+
+    p_sorted, sorted_indices = torch.sort(p, dim=0, descending=True)
+    p_cumulative = torch.cumsum(p_sorted, dim=0)
 
     to_keep = p_cumulative <= top_p
 
     # Always keep at least one, so shift to the right
-    to_keep[..., 1:] = to_keep[..., :-1].clone()
-    to_keep[..., 0] = 1
+    to_keep[1:] = to_keep[:-1].clone()
+    to_keep[0] = True
 
     to_keep = sorted_indices[to_keep]
 
-    p = p[..., to_keep]
-
-    token_p, token_idx = sample(p, temperature)
-
-    token_idx = to_keep[..., token_idx]
-
-    return token_p, token_idx
+    return logits[to_keep], to_keep
 
 
-def sample(p, temperature=1.0):
+def filter_top_k(logits, top_k=20):
     """
-    TODO : make it work for batch_size > 0
 
-    :param p: shape (1, 1, num_tokens)
-    :param temperature:
-    :return:
+    :param logits: shape (num_tokens,)
+    :param top_k:
+
+    :return: kept logits, kept token indices
     """
-    p = torch.pow(p, 1.0 / temperature)
-    p_sum = torch.sum(p, dim=2)
-    p = p / p_sum[:, :, None]
 
-    token_idx = torch.multinomial(p.view(-1), 1)
-    token_p = torch.gather(p, 2, token_idx.view(1, -1, 1))
+    p = F.softmax(logits, dim=0)
 
-    token_idx = token_idx.view(1, -1)
-    token_p = token_p.view(1, -1)
+    p_sorted, sorted_indices = torch.sort(p, dim=0, descending=True)
 
-    return token_p, token_idx
+    to_keep = sorted_indices[:top_k]
+
+    return logits[to_keep], to_keep
