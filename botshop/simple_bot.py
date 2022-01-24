@@ -225,6 +225,9 @@ class SimpleBot(Base):
         return response, scores
 
     def _calc_final_response_score(self, scores):
+        if scores is None:
+            return None
+
         return statistics.mean(scores)
 
     def _log_response(self, actor_name, response, score=None):
