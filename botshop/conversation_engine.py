@@ -9,17 +9,14 @@ class UnableToGenerateValidResponse(Exception):
 
 class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
 
-    def __init__(self, io_processor, model_evaluator, debug=False):
+    def __init__(self, model_evaluator, debug=False):
         super().__init__()
 
-        self._io_processor = io_processor
         self._model_evaluator = model_evaluator
 
         self._debug = debug
 
         self._conversation_context = {}
-
-        self._validate()
 
     def reset_state(self):
         self._conversation_context = {}
@@ -46,10 +43,6 @@ class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
         """
         self._log.error("Please implement this method in a child class")
 
-    def _validate(self):
-        # TODO
-        self._valid = True
-
 
 class BasicConversationEngine(ConversationEngineBase):
 
@@ -61,7 +54,7 @@ class BasicConversationEngine(ConversationEngineBase):
                  is_sequence_end_func=None,
                  max_response_length=-1,
                  **kwargs):
-        super().__init__(io_processor, model_evaluator, **kwargs)
+        super().__init__(model_evaluator, **kwargs)
 
         self._select_token_func = select_token_func
 
@@ -74,6 +67,8 @@ class BasicConversationEngine(ConversationEngineBase):
         if sequence_end_token is not None:
             self._log.debug("Creating is_sequence_end_func using sequence_end_token")
             is_sequence_end_func = lambda response, scores: response[-1] == sequence_end_token
+
+        self._io_processor = io_processor
 
         self.sequence_end_token = sequence_end_token
         self._is_sequence_end_func = is_sequence_end_func
