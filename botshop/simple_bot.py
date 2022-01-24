@@ -42,7 +42,8 @@ class SimpleBot(Base):
                  init_chats=None,
                  init_is_user=None,
                  init_actor_name=None,
-                 debug=False):
+                 debug=False,
+                 name=None):
         """
 
         :param conversation_engine: Conversation engine instance derived from ConversationEngineBase
@@ -74,9 +75,10 @@ class SimpleBot(Base):
                                 ]
 
         :param debug: If True, more logging is done
+        :param name: Name of Bot system (class name by default)
         """
 
-        super().__init__()
+        super().__init__(pybase_logger_name=name)
 
         self._conversation_engine = conversation_engine
 

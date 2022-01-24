@@ -9,8 +9,8 @@ class UnableToGenerateValidResponse(Exception):
 
 class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
 
-    def __init__(self, model_evaluator, debug=False):
-        super().__init__()
+    def __init__(self, model_evaluator, debug=False, name=None):
+        super().__init__(pybase_logger_name=name)
 
         self._model_evaluator = model_evaluator
 
