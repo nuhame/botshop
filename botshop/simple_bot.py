@@ -1,3 +1,4 @@
+import abc
 import sys
 
 import re
@@ -28,7 +29,19 @@ def chat_with(bot, user_name="You", logger=None):
             break
 
 
-class SimpleBot(Base):
+class BotBase(Base, metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def reset_state(self):
+        raise NotImplementedError("Please implement this method in your child class")
+
+
+    @abc.abstractmethod
+    def respond_to(self, user_chat, user_name=None):
+        raise NotImplementedError("Please implement this method in your child class")
+
+
+class SimpleBot(BotBase):
     SYSTEM_COMMAND = re.compile('^##(.+)##$')
 
     RESET_STATE_COMMAND = re.compile('^(reset|r)$', re.I)
@@ -42,6 +55,7 @@ class SimpleBot(Base):
                  init_chats=None,
                  init_is_user=None,
                  init_actor_name=None,
+                 log_conversation=True,
                  debug=False,
                  name=None):
         """
@@ -74,6 +88,7 @@ class SimpleBot(Base):
                                     <actor name N>
                                 ]
 
+        :param log_conversation: If True, the conversations will be logged to stdout
         :param debug: If True, more logging is done
         :param name: Name of Bot system (class name by default)
         """
@@ -85,6 +100,7 @@ class SimpleBot(Base):
         self._user_name = user_name
         self._bot_name = bot_name
 
+        self._log_conversation = log_conversation
         self._debug = debug
 
         # chat history
@@ -136,8 +152,8 @@ class SimpleBot(Base):
         if user_name is None:
             user_name = self._user_name
 
-        if self._debug:
-            self._log.debug(f'{user_name} : {user_chat}')
+        if self._log_conversation:
+            self._log_user_input(user_chat, user_name)
 
         scores = None
         system_message = self._execute_command_in(user_chat, user_name=user_name)
@@ -165,9 +181,10 @@ class SimpleBot(Base):
                 self._is_user.append(False)
                 self._actor_name.append(self._bot_name)
 
-                self._log_response(self._bot_name, bot_chat, score=self._calc_final_response_score(scores))
+                if self._log_conversation:
+                    self._log_response(self._bot_name, bot_chat, score=self._calc_final_response_score(scores))
 
-        if system_message is not None:
+        if self._log_conversation and system_message is not None:
             self._log_response("System", system_message)
 
         return {
@@ -229,6 +246,12 @@ class SimpleBot(Base):
             return None
 
         return statistics.mean(scores)
+
+    def _log_user_input(self, user_chat, user_name=None):
+        if user_name is None:
+            user_name = "User"
+
+        self._log.info(f'{user_name} : {user_chat}')
 
     def _log_response(self, actor_name, response, score=None):
         if score is not None:
