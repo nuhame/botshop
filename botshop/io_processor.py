@@ -21,11 +21,12 @@ class IOProcessorBase(Base, metaclass=abc.ABCMeta):
         self._log.error("Please implement this method in a child class")
 
     @abc.abstractmethod
-    def process_response(self, response, scores=None):
+    def process_response(self, response, scores=None, stop_sequence=None):
         """
 
         :param response:
         :param scores:
+        :param stop_sequence:
 
         :return: processed response, scores
         """
@@ -83,11 +84,13 @@ class SimpleIOProcessor(IOProcessorBase):
 
         return sequence_inputs, other_inputs
 
-    def process_response(self, response, scores=None, **kwargs):
+    def process_response(self, response, scores=None, stop_sequence=None, **kwargs):
         """
 
         :param response: bot response
         :param scores: data structure (e.g. list) with one or more scores related to the response
+        :param stop_sequence
+
         :return:
         """
 
