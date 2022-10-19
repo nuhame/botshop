@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="botshop",
-    version="0.0.37",
+    version="0.0.38",
     author="Freddy Snijder",
     author_email="botshop@visionscapers.com",
     description="Framework for chatbot model inference, optimized for neural conversation models.",
