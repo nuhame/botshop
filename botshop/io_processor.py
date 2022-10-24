@@ -8,6 +8,9 @@ class IOProcessorBase(Base, metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def reset_state(self):
+        pass
+
     @abc.abstractmethod
     def process_inputs(self, inputs, conversation_start):
         """
