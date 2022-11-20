@@ -117,7 +117,7 @@ class BasicConversationEngine(ConversationEngineBase):
 
         response, scores = self._process_response(response, scores)
 
-        return response, scores
+        return response, scores, None # Other outpus
 
     def _will_create_response(self):
         pass

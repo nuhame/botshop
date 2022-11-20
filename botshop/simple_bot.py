@@ -158,13 +158,14 @@ class SimpleBot(BotBase):
         scores = None
         system_message = self._execute_command_in(user_chat, user_name=user_name)
         bot_chat = None
+        other_outputs = None
         if system_message is None:  # No command executed
             self._chats.append(user_chat)
             self._is_user.append(True)
             self._actor_name.append(user_name)
 
             try:
-                bot_chat, scores = self._respond()
+                bot_chat, scores, other_outputs = self._respond()
             except UnableToGenerateValidResponse as e:
                 system_message = f"Bot {self._bot_name} was unable to generate a valid response. " \
                                  f"Your chat is not recorded."
@@ -190,6 +191,7 @@ class SimpleBot(BotBase):
         return {
             'bot': bot_chat,
             'scores': scores,
+            'other_outputs': other_outputs,
             'system': system_message,
         }
 
@@ -232,14 +234,14 @@ class SimpleBot(BotBase):
             return 'Execution of system command by evaluator failed, no effect.', None
 
     def _respond(self):
-        response, scores = self._conversation_engine.respond({
+        response, scores, other_outputs = self._conversation_engine.respond({
             "chats": self._chats,
             "is_user": self._is_user,
             "actor_name": self._actor_name,
             "responding_actor": self._bot_name
         }, self._conversation_start)
 
-        return response, scores
+        return response, scores, other_outputs
 
     def _calc_final_response_score(self, scores):
         if scores is None:
