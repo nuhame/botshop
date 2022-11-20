@@ -39,7 +39,7 @@ class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
         :param inputs: Dict with one or more different toes of inputs
         :param conversation_start: Boolean
 
-        :return: <response to input>, <score(s)>
+        :return: <response to input>, <score(s)>, <other outputs or None>
         """
         self._log.error("Please implement this method in a child class")
 
