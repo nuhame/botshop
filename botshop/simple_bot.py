@@ -184,6 +184,11 @@ class SimpleBot(BotBase):
 
                 if self._log_conversation:
                     self._log_response(self._bot_name, bot_chat, score=self._calc_final_response_score(scores))
+            else:
+                # An issue occurred, remove last user chat
+                self._chats = self._chats[:-1]
+                self._is_user = self._is_user[:-1]
+                self._actor_name = self._actor_name[:-1]
 
         if self._log_conversation and system_message is not None:
             self._log_response("System", system_message)
