@@ -50,28 +50,15 @@ class BasicConversationEngine(ConversationEngineBase):
                  io_processor,
                  model_evaluator,
                  select_token_func,
-                 sequence_end_token=None,
-                 is_sequence_end_func=None,
+                 sequence_end_detector_func,
                  max_response_length=-1,
                  **kwargs):
         super().__init__(model_evaluator, **kwargs)
 
-        self._select_token_func = select_token_func
-
-        if sequence_end_token is None and is_sequence_end_func is None:
-            raise Exception("Define sequence_end_token or is_sequence_end_func")
-
-        if sequence_end_token is not None and is_sequence_end_func is not None:
-            raise Exception("Either define sequence_end_token or is_sequence_end_func")
-
-        if sequence_end_token is not None:
-            self._log.debug("Creating is_sequence_end_func using sequence_end_token")
-            is_sequence_end_func = lambda response, scores: response[-1] == sequence_end_token
-
         self._io_processor = io_processor
 
-        self.sequence_end_token = sequence_end_token
-        self._is_sequence_end_func = is_sequence_end_func
+        self._select_token_func = select_token_func
+        self._sequence_end_detector_func = sequence_end_detector_func
 
         self._max_response_length = max_response_length
 
@@ -107,17 +94,24 @@ class BasicConversationEngine(ConversationEngineBase):
             response += [self._unwrap(token)]
             scores += [self._unwrap(score)]
 
-            if self._is_sequence_end(response, scores):
+            sequence_end = self._sequence_end_detector_func(response, scores)
+            if sequence_end:
+                self._log.debug(f"Detected sequence end: {sequence_end}")
+
+                response = response[:-len(sequence_end)]
+                scores = scores[:-len(sequence_end)]
+
                 break
 
             if len(response) >= self._max_response_length > 0:
+                self._log.debug("Max. response length reached.")
                 break
 
             prev_token = token
 
         response, scores = self._process_response(response, scores)
 
-        return response, scores, None # Other outpus
+        return response, scores, None  # Other outputs
 
     def _will_create_response(self):
         pass
