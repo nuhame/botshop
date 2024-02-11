@@ -64,7 +64,7 @@ class SimpleIOProcessor(IOProcessorBase):
     def process_inputs(self, inputs, conversation_start):
         """
 
-        The given inputs are split in to sequence_inputs and other_inputs.
+        The given inputs are split into sequence_inputs and other_inputs.
         The sequence_inputs are further processed, before both are returned.
 
         :param inputs: Dict with one or more different types of inputs
