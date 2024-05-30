@@ -164,15 +164,20 @@ class SimpleBot(BotBase):
             self._is_user.append(True)
             self._actor_name.append(user_name)
 
+            generation_exception = None
             try:
                 bot_chat, scores, other_outputs = self._respond()
             except UnableToGenerateValidResponse as e:
                 system_message = f"Bot {self._bot_name} was unable to generate a valid response. " \
                                  f"Your chat is not recorded."
+                generation_exception = e
             except Exception as e:
                 system_message = f"An unexpected exception occurred, bot {self._bot_name} was " \
                                  f"unable to generate a response. Your chat is not recorded."
-                log_exception(self._log, "system_message", e)
+                generation_exception = e
+
+            if generation_exception is not None:
+                log_exception(self._log, "Response generation failed", generation_exception)
 
             if system_message is None:  # No exception occurred
                 if self._conversation_start:
