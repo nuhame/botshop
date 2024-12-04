@@ -26,7 +26,7 @@ class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
         """
 
         :param command:
-        :param user_name: Optional, user name of the user who input the command
+        :param user_name: Optional, username of the user who input the command
 
         :return: <system message> = None, when the conversation engine did not process any command
         """
@@ -115,9 +115,6 @@ class BasicConversationEngine(ConversationEngineBase):
 
     def _will_create_response(self):
         pass
-
-    def _is_sequence_end(self, response, scores):
-        return self._is_sequence_end_func(response=response, scores=scores)
 
     def _process_response(self, response, scores):
         return self._io_processor.process_response(response, scores=scores)

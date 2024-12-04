@@ -3,6 +3,7 @@ import sys
 
 import re
 import statistics
+from typing import Protocol, List, Tuple, Optional, Dict
 
 from .conversation_engine import UnableToGenerateValidResponse
 
@@ -11,22 +12,24 @@ from basics.base import Base
 from basics.logging import get_logger
 from basics.logging_utils import log_exception
 
+from .messages import Message, BotMessage, UserMessage
 
-def chat_with(bot, user_name="You", logger=None):
-    if logger is None:
-        logger = get_logger("Bot")
 
-    while True:
-        logger.info(f'{user_name} :')
-        # 3) ask for input
-        user_input = input()
-        sys.stdout.write('\n')
-        sys.stdout.flush()
+class CreateBotResponseFunc(Protocol):
 
-        response = bot.respond_to(user_input)
+    def __call__(self, conversation: List[Message]) -> Tuple[
+        BotMessage,
+        Optional[Dict]
+    ]:
+        """
+        Create bot response based on given conversation messages
 
-        if response["system"] == "quit":
-            break
+        :param conversation: List of conversation messages
+
+        :return: Tuple:
+            Bot Response, optional dict with auxiliary data
+        """
+        pass
 
 
 class BotBase(Base, metaclass=abc.ABCMeta):
@@ -35,9 +38,8 @@ class BotBase(Base, metaclass=abc.ABCMeta):
     def reset_state(self):
         raise NotImplementedError("Please implement this method in your child class")
 
-
     @abc.abstractmethod
-    def respond_to(self, user_chat, user_name=None):
+    def respond_to(self, user_chat: UserMessage, user_name: Optional[str] = None):
         raise NotImplementedError("Please implement this method in your child class")
 
 
@@ -49,44 +51,24 @@ class SimpleBot(BotBase):
     QUIT_COMMAND = re.compile('^(q|quit)$', re.I)
 
     def __init__(self,
-                 conversation_engine,
-                 user_name='User',
-                 bot_name='Bot',
-                 init_chats=None,
-                 init_is_user=None,
-                 init_actor_name=None,
-                 log_conversation=True,
-                 debug=False,
-                 name=None):
+                 create_bot_response_func: CreateBotResponseFunc,
+                 user_name: str = 'User',
+                 bot_name: str = 'Bot',
+                 init_chats: Optional[List[Message]] = None,
+                 log_conversation: bool = True,
+                 debug: bool = False,
+                 name: Optional[str] = None):
         """
 
-        :param conversation_engine: Conversation engine instance derived from ConversationEngineBase
-        :param user_name: Optional, default user name if no user name given with respond_to() method
+        :param create_bot_response_func: function that is used to create a bot response based on the conversation so far
+        :param user_name: Optional, default username if no username given with respond_to() method
         :param bot_name: Optional, default bot name
         :param init_chats: Optional, list, initial chat history
                            [
-                                <chat 0>
+                                <Message 0>
                                 ...
-                                <chat N>
+                                <Message N>
                            ]
-        :param init_is_user: Optional, list, when init_chats is given, per chat it can be provided if it was a
-                             user (True) or bot (False) utterance. len(init_is_user) must be equal to len(init_chats)
-                             If not provided, it is assumed that the user started, and that the user and the bot take
-                             equal turns after each other.
-                             [
-                                <True|False>
-                                ...
-                                <True|False>
-                            ]
-        :param init_actor_name: Optional, list, when init_chats is given, per chat the actor name, who uttered the chat,
-                                can be provided. If this list is not provided, it is assumed that the user started and
-                                that the bot and user take equal turns after each other; in this way the default
-                                user name and bot name are used as actor names.
-                                [
-                                    <actor name 0>
-                                    ...
-                                    <actor name N>
-                                ]
 
         :param log_conversation: If True, the conversations will be logged to stdout
         :param debug: If True, more logging is done
@@ -95,7 +77,7 @@ class SimpleBot(BotBase):
 
         super().__init__(pybase_logger_name=name)
 
-        self._conversation_engine = conversation_engine
+        self._create_bot_response_func = create_bot_response_func
 
         self._user_name = user_name
         self._bot_name = bot_name
@@ -267,3 +249,19 @@ class SimpleBot(BotBase):
         else:
             self._log.info('%s : \n%s\n' % (actor_name, response))
 
+
+def chat_with(bot: BotBase, user_name: str = "You", logger=None):
+    if logger is None:
+        logger = get_logger("Bot")
+
+    while True:
+        logger.info(f'{user_name} :')
+        # 3) ask for input
+        user_input = input()
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+
+        response = bot.respond_to(user_input)
+
+        if response["system"] == "quit":
+            break
