@@ -20,7 +20,6 @@ class BotInterface(Protocol):
     def reset_state(self):
         ...
 
-
     def respond_to(self, user_chat: UserMessage) -> Tuple[Message, Optional[Dict]]:
         ...
 
