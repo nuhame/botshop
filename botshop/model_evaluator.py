@@ -1,4 +1,5 @@
 import abc
+from typing import Dict
 
 from basics.base import Base
 
@@ -10,7 +11,7 @@ class ModelEvaluatorBase(Base, metaclass=abc.ABCMeta):
         self._log.error("Please implement this method in a child class")
 
     @abc.abstractmethod
-    def update_context(self, inputs, conversation_context, conversation_start):
+    def update_context(self, inputs: Dict, conversation_context: Dict, conversation_start: bool):
         """
 
         :param inputs: Dict with one or more different types of inputs
@@ -23,7 +24,7 @@ class ModelEvaluatorBase(Base, metaclass=abc.ABCMeta):
         self._log.error("Please implement this method in a child class")
 
     @abc.abstractmethod
-    def predict_next_token(self, previous_token, prediction_context, conversation_context):
+    def predict_next_token(self, previous_token: int, prediction_context: Dict, conversation_context: Dict):
         """
 
         :param previous_token: Previous token, initially None

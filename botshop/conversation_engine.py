@@ -1,28 +1,66 @@
 import abc
+import statistics
+from typing import Protocol, Optional, List, Tuple, Dict
 
 from basics.base import Base
+
+from botshop import ModelEvaluatorBase
+from botshop.messages import Message, BotMessage, SystemMessage
 
 
 class UnableToGenerateValidResponse(Exception):
     pass
 
 
-class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
+class ConversationEngineInterface(Protocol):
 
-    def __init__(self, model_evaluator, debug=False, name=None):
+    def reset_state(self):
+        """
+        Reset state of conversation engine, if any
+        This allows for stateful engines
+
+        :return:
+        """
+        ...
+
+    def execute_command(self, command: str, user_name: Optional[str] = None) -> Optional[SystemMessage]:
+        """
+
+        :param command:
+        :param user_name: Optional, username of the user who input the command
+
+        :return: <system message> = None, when the conversation engine did not process any command
+        """
+        ...
+
+    def respond(self, chats: List[Message], conversation_start: bool = False) -> Tuple[
+        BotMessage,
+        Optional[Dict]
+    ]:
+        """
+
+        :param chats: List of messages representing the conversation
+        :param conversation_start: Boolean
+
+        :return: <response to input>, <auxiliary results or None>
+        """
+        ...
+
+
+class LocalModelConversationEngine(Base, metaclass=abc.ABCMeta):
+
+    def __init__(self, model_evaluator: ModelEvaluatorBase, debug=False, name=None):
         super().__init__(pybase_logger_name=name)
 
         self._model_evaluator = model_evaluator
-
         self._debug = debug
-
         self._conversation_context = {}
 
     def reset_state(self):
         self._conversation_context = {}
         self._model_evaluator.reset_state()
 
-    def execute_command(self, command, user_name=None):
+    def execute_command(self, command: str, user_name: Optional[str] = None) -> Optional[SystemMessage]:
         """
 
         :param command:
@@ -33,18 +71,21 @@ class ConversationEngineBase(Base, metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def respond(self, inputs, conversation_start=False):
+    def respond(self, chats: List[Message], conversation_start: bool = False) -> Tuple[
+        BotMessage,
+        Optional[Dict]
+    ]:
         """
 
-        :param inputs: Dict with one or more different toes of inputs
+        :param chats: List of messages representing the conversation
         :param conversation_start: Boolean
 
-        :return: <response to input>, <score(s)>, <other outputs or None>
+        :return: <response to input>, <auxiliary results or None>
         """
-        self._log.error("Please implement this method in a child class")
+        raise NotImplementedError("Please implement this method in a child class")
 
 
-class BasicConversationEngine(ConversationEngineBase):
+class BasicLocalModelConversationEngine(LocalModelConversationEngine):
 
     def __init__(self,
                  io_processor,
@@ -62,8 +103,18 @@ class BasicConversationEngine(ConversationEngineBase):
 
         self._max_response_length = max_response_length
 
-    def respond(self, inputs, conversation_start=False):
-        processed_inputs = self._io_processor.process_inputs(inputs, conversation_start)
+    def respond(self, chats: List[Message], conversation_start: bool = False) -> Tuple[
+        BotMessage,
+        Optional[Dict]
+    ]:
+        """
+
+        :param chats: List of messages representing the conversation
+        :param conversation_start: Boolean
+
+        :return: <response to input>, <auxiliary results or None>
+        """
+        processed_inputs = self._io_processor.process_inputs(chats, conversation_start)
 
         self._model_evaluator.update_context(processed_inputs, self._conversation_context, conversation_start)
 
@@ -74,7 +125,6 @@ class BasicConversationEngine(ConversationEngineBase):
         Called after model context updated
 
         :return:
-        :rtype:
         """
 
         self._will_create_response()
@@ -84,9 +134,11 @@ class BasicConversationEngine(ConversationEngineBase):
         response = []
         scores = []
         while True:
-            prediction_data = self._model_evaluator.predict_next_token(prev_token,
-                                                                       prediction_context,
-                                                                       self._conversation_context)
+            prediction_data = self._model_evaluator.predict_next_token(
+                prev_token,
+                prediction_context,
+                self._conversation_context)
+
             # Obtain most likely word token and its score
             score, token = self._select_token_func(prediction_data)
 
@@ -111,7 +163,9 @@ class BasicConversationEngine(ConversationEngineBase):
 
         response, scores = self._process_response(response, scores)
 
-        return response, scores, None  # Other outputs
+        return BotMessage(text=response, score=statistics.mean(scores)), {
+            "scores": scores,
+        }
 
     def _will_create_response(self):
         pass

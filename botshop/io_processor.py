@@ -1,6 +1,9 @@
 import abc
+from typing import List, Optional, Tuple, Any, Dict
 
 from basics.base import Base
+
+from botshop.messages import Message
 
 
 class IOProcessorBase(Base, metaclass=abc.ABCMeta):
@@ -12,19 +15,24 @@ class IOProcessorBase(Base, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def process_inputs(self, inputs, conversation_start):
+    def process_inputs(self, inputs: List[Message], conversation_start: bool) -> Dict:
         """
 
-        :param inputs: Dict with one or more different types of inputs
+        :param inputs: List of conversation messages
         :param conversation_start: Bool, if the given inputs are the initial inputs of a new
                                    conversation
 
-        :return:
+        :return: Dict with processed inputs
         """
-        self._log.error("Please implement this method in a child class")
+        raise NotImplementedError("Please implement this method in a child class")
 
     @abc.abstractmethod
-    def process_response(self, response, scores=None, stop_sequence=None):
+    def process_response(
+        self,
+        response: str,
+        scores: Optional[List[float]]=None,
+        stop_sequence: Optional[str]=None
+    ) -> Tuple[str, Optional[List[float]]]:
         """
 
         :param response:
@@ -33,108 +41,4 @@ class IOProcessorBase(Base, metaclass=abc.ABCMeta):
 
         :return: processed response, scores
         """
-        self._log.error("Please implement this method in a child class")
-
-
-class SimpleIOProcessor(IOProcessorBase):
-
-    def __init__(self,
-                 encoding_func,
-                 decoding_func,
-                 preprocessing_func=None,
-                 **kwargs):
-        """
-
-        :param encoding_func       : function that takes a list of sequences as inputs
-                                     (not tokenized) and returns a tokenized and indexed list of inputs
-
-        :param decoding_func     : function that takes a list of tokenized and indexed inputs
-                                   and returns a detokenized and deindexed list of inputs
-
-        :param preprocessing_func  : Optional, function that takes a list of sequences as inputs and
-                                     returns a preprocessed list of inputs
-        """
-        super().__init__(**kwargs)
-
-        self._encoding_func = encoding_func
-        self._decoding_func = decoding_func
-
-        self._preprocessing_func = preprocessing_func
-
-    def process_inputs(self, inputs, conversation_start):
-        """
-
-        The given inputs are split into sequence_inputs and other_inputs.
-        The sequence_inputs are further processed, before both are returned.
-
-        :param inputs: Dict with one or more different types of inputs
-        :param conversation_start: Bool, if the given inputs are the initial inputs of a new
-                                   conversation
-
-        :return: processed sequence_inputs, other_inputs
-        """
-        sequence_inputs, other_inputs = self._get_input_chats(inputs, conversation_start)
-
-        # Preprocessing is optional
-        if callable(self._preprocessing_func):
-            sequence_inputs = self._preprocessing_func(sequence_inputs)
-
-        sequence_inputs = self._build_input_sequences(sequence_inputs, conversation_start)
-
-        sequence_inputs = self.encode(sequence_inputs)
-
-        sequence_inputs = self._postprocess(sequence_inputs)
-
-        return sequence_inputs, other_inputs
-
-    def process_response(self, response, scores=None, stop_sequence=None, **kwargs):
-        """
-
-        :param response: bot response
-        :param scores: data structure (e.g. list) with one or more scores related to the response
-        :param stop_sequence
-
-        :return:
-        """
-
-        return self.decode(response), scores
-
-    def encode(self, sequence_inputs, **kwargs):
-        return self._encoding_func(sequence_inputs)
-
-    def decode(self, response, **kwargs):
-        return self._decoding_func(response)
-
-    @abc.abstractmethod
-    def _get_input_chats(self, inputs, conversation_start):
-        """
-
-        Get the raw input chats (and other inputs if any) from the inputs dict
-        return the selected inputs split as sequence_inputs and other_inputs.
-
-        sequence_inputs will be further processed, other_inputs not
-
-        :param inputs: Dict with one or more different types of inputs
-        :param conversation_start: Bool, if the given inputs are the initial inputs of a new
-                                   conversation
-
-        :return: equence_inputs, other_inputs
-        """
         raise NotImplementedError("Please implement this method in a child class")
-
-    @abc.abstractmethod
-    def _build_input_sequences(self, sequence_inputs, conversation_start):
-        raise NotImplementedError("Please implement this method in a child class")
-
-    def _postprocess(self, sequence_inputs):
-        """
-        Optional step
-
-        :param sequence_inputs:
-        :return:
-        """
-
-        return sequence_inputs
-
-
-

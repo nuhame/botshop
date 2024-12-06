@@ -1,4 +1,4 @@
-from botshop.conversation_engine import BasicConversationEngine as BasicConversationEngineBase
+from botshop.conversation_engine import LocalModelConversationEngine as BasicConversationEngineBase
 
 
 class BasicConversationEngine(BasicConversationEngineBase):
