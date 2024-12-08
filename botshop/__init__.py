@@ -1,9 +1,9 @@
-from .simple_bot import SimpleBot
+from botshop.simple_bot import SimpleBot
 
-from .conversation_engine import LocalModelConversationEngine, LocalModelConversationEngine, UnableToGenerateValidResponse
+from botshop.conversation_engine import LocalModelConversationEngine, LocalModelConversationEngine, UnableToGenerateValidResponse
 
-from .io_processor import IOProcessorBase, SimpleIOProcessor
+from botshop.io_processor import IOProcessorBase
 
-from .model_evaluator import ModelEvaluatorBase
+from botshop.model_evaluator import ModelEvaluatorBase
 
-from .sample_and_rank import SampleAndRank
+from botshop.sample_and_rank import SampleAndRank

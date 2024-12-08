@@ -4,7 +4,7 @@ from typing import Protocol, Optional, List, Tuple, Dict
 
 from basics.base import Base
 
-from botshop import ModelEvaluatorBase
+from botshop.model_evaluator import ModelEvaluatorBase
 from botshop.messages import Message, BotMessage, SystemMessage
 
 
