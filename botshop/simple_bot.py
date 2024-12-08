@@ -1,18 +1,19 @@
 import abc
+import logging
 import sys
 
 import re
 import statistics
-from typing import List, Optional, Protocol, Tuple, Dict
+from typing import List, Optional, Protocol, Tuple, Dict, Callable
 
-from .conversation_engine import UnableToGenerateValidResponse, ConversationEngineInterface
+from botshop.conversation_engine import UnableToGenerateValidResponse, ConversationEngineInterface
 
 from basics.base import Base
 
 from basics.logging import get_logger
 from basics.logging_utils import log_exception
 
-from .messages import Message, BotMessage, UserMessage, SystemMessage
+from botshop.messages import Message, BotMessage, UserMessage, SystemMessage
 
 
 class BotInterface(Protocol):
@@ -214,8 +215,18 @@ class SimpleBot(Base):
         return user_name
 
 
+class LogAuxResultsFunc(Protocol):
 
-def chat_with(bot: BotInterface, user_name: str = "You", logger=None):
+    def __call__(self, aux_results: Optional[Dict], logger: logging.Logger):
+        ...
+
+
+def chat_with(
+    bot: BotInterface,
+    user_name: str = "You",
+    log_aux_results_func: LogAuxResultsFunc = None,
+    logger=None
+):
     if logger is None:
         logger = get_logger("Bot")
 
@@ -226,10 +237,13 @@ def chat_with(bot: BotInterface, user_name: str = "You", logger=None):
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-        response, _ = bot.respond_to(UserMessage(
+        response, aux_results = bot.respond_to(UserMessage(
             text=user_input,
             actor_name=user_name
         ))
+
+        if log_aux_results_func:
+            log_aux_results_func(aux_results, logger)
 
         if isinstance(response, SystemMessage) and response.text == "quit":
             break
