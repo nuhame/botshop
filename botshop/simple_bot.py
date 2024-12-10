@@ -38,7 +38,7 @@ class SimpleBot(Base):
             user_name: Optional[str] = None,
             bot_name: Optional[str] = None,
             init_chats: Optional[List[Message]] = None,
-            log_conversation: bool = True,
+            log_responses: bool = True,
             debug: bool = False,
             name: Optional[str] = None):
         """
@@ -53,7 +53,7 @@ class SimpleBot(Base):
                 <Message N>
            ]
 
-        :param log_conversation: If True, the conversations will be logged to stdout
+        :param log_responses: If True, the bot response, including system messages, will be logged to stdout
         :param debug: If True, more logging is done
         :param name: Name of Bot system (class name by default)
         """
@@ -71,7 +71,7 @@ class SimpleBot(Base):
         self._user_name = user_name
         self._bot_name = bot_name
 
-        self._log_conversation = log_conversation
+        self._log_responses = log_responses
         self._debug = debug
 
         # chat history
@@ -108,9 +108,6 @@ class SimpleBot(Base):
         if user_chat.actor_name is None:
             user_chat.actor_name = self._user_name
 
-        if self._log_conversation:
-            self._log_chat(user_chat)
-
         system_message = self._execute_command_in(user_chat)
         bot_chat = None
         other_outputs = None
@@ -134,7 +131,7 @@ class SimpleBot(Base):
 
                 self._chats.append(bot_chat)
 
-                if self._log_conversation:
+                if self._log_responses:
                     self._log_chat(bot_chat)
             else:
                 # An issue occurred, remove last user chat
@@ -143,7 +140,7 @@ class SimpleBot(Base):
         if system_message is not None:
             system_message = SystemMessage(text=system_message)
 
-        if self._log_conversation and system_message is not None:
+        if self._log_responses and system_message is not None:
             self._log_chat(system_message)
 
         response_message = system_message if system_message is not None else bot_chat
