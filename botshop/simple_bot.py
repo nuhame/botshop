@@ -231,7 +231,14 @@ def chat_with(
         logger.info(f'{user_name} :')
         # 3) ask for input
         user_input = input()
+        if len(user_input) == 0:
+            # Guard against accidentally pressing enter without any input
+            sys.stdout.write('\007')
+            sys.stdout.flush()
+            continue
+
         sys.stdout.write('\n')
+        sys.stdout.write('=============================\n\n\n')
         sys.stdout.flush()
 
         response, aux_results = bot.respond_to(UserMessage(
